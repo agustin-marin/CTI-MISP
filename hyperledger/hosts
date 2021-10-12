@@ -1,0 +1,4 @@
+127.0.0.1 orderer.local.com
+127.0.0.1 peer0.org1.local.com
+127.0.0.1 ca.local.com
+127.0.0.1 machine.local.com
