@@ -2,6 +2,7 @@ package contracts;
 
 import com.owlike.genson.Genson;
 import com.owlike.genson.GensonBuilder;
+import org.hyperledger.fabric.Logger;
 import org.hyperledger.fabric.contract.Context;
 import org.hyperledger.fabric.contract.ContractInterface;
 import org.hyperledger.fabric.contract.annotation.Contract;
@@ -16,6 +17,8 @@ import org.json.JSONObject;
 
 import java.util.HashMap;
 
+import static org.hyperledger.fabric.Logger.getLogger;
+
 @Contract(
     name = "MipsEventSaver",
         info = @Info(
@@ -27,17 +30,17 @@ import java.util.HashMap;
 
 @Default
 public final class MipsEventSaver implements ContractInterface {
+
     // Serializacion JSON
     private final Genson genson = new GensonBuilder().create();//.rename("context","@context").create();
-
-    /**
+     /**
      * Get event from the ledger (if it exists)
      * @param key uuid + instance name from the event saved before.
      * @return EVENT
      */
     @Transaction()
 
-    public JSONObject getEvent(final Context ctx, final String key) {
+    public String getEvent(final Context ctx, final String key) {
         ChaincodeStub stub = ctx.getStub();
 
 
@@ -46,7 +49,7 @@ public final class MipsEventSaver implements ContractInterface {
             String errorMessage = "Event " + key + " was not saved in the ledger before";
             throw new ChaincodeException(errorMessage, "Event does not exist");
         }
-        return new JSONObject(event);
+        return new JSONObject(event).toString();
     }
 
     /**
@@ -57,13 +60,13 @@ public final class MipsEventSaver implements ContractInterface {
      */
     @Transaction()
 
-    public JSONObject putEvent(final Context ctx, final String event, final String instance) {
+    public String putEvent(final Context ctx, final String event, final String instance) {
+        JSONObject eventobject = null;
         ChaincodeStub stub = ctx.getStub();
-        JSONObject eventobject = new JSONObject(event).getJSONObject("Event");
+        eventobject = new JSONObject(event).getJSONObject("Event");
         String key = eventobject.getString("uuid") + instance;
-
         stub.putStringState(key, event);
-        return eventobject;
+        return new JSONObject().put(key,eventobject).toString();
     }
 
     /**
