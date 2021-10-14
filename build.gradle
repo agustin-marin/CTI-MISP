@@ -37,7 +37,7 @@ repositories {
 }
 
 application {
-    mainClass = 'contracts.NoeliaDataSaver'
+    mainClass = 'contracts.MipsEventSaver'
 }
 
 test {
