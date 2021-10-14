@@ -58,7 +58,7 @@ This command will generate a new folder in the path build/install/ called 'Event
 Now we have the compiled project, we just need to package and install the chaincode (using the CLI) commands:
 ```
 # EVENTSC is  the compiled folder from the last section
-peer lifecycle chaincode package ./EventSC --path ./packagedEventsc.tar.gz  --lang java --label EventSC1
+peer lifecycle chaincode package ./packagedEventsc.tar.gz --path  ./EventSC  --lang java --label EventSC1
 peer lifecycle chaincode install ./packagedEventsc.tar.gz
 ```
 
