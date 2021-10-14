@@ -55,7 +55,7 @@ public final class MipsEventSaver implements ContractInterface {
     /**
      * Store event in the ledger
      * @param event Json with the misp threat event
-     * @param instance Name of the instance (URL
+     * @param instance Name of the instance (URL)
      * @return
      */
     @Transaction()
