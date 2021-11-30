@@ -38,8 +38,9 @@ public final class MipsEventSaver implements ContractInterface {
      * @param key uuid + instance name from the event saved before.
      * @return EVENT
      */
-    @Transaction()
 
+
+    @Transaction()
     public String getEvent(final Context ctx, final String key) {
         ChaincodeStub stub = ctx.getStub();
 
