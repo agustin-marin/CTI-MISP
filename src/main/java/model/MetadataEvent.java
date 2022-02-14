@@ -35,13 +35,20 @@ public class MetadataEvent {
     private String username;
     @Property
     private Body body;
+    @Property
+    private String policy;
+    @Property
+    private String hierarchy;
 
     public MetadataEvent(@JsonProperty("datetime") final String datetime, @JsonProperty("timestamp") final long timestamp,
                          @JsonProperty("token") final  Token token,@JsonProperty("url") final  String uri,
                          @JsonProperty("response") final  Response response,@JsonProperty("method") final  String method,
                          @JsonProperty("ipaddress") final  String ipaddress, @JsonProperty("instance") final String instance,
-                         @JsonProperty("username") final  String username, @JsonProperty("body") final  Body body) {
+                         @JsonProperty("username") final  String username, @JsonProperty("body") final  Body body,
+                         @JsonProperty("policy") final String policy, @JsonProperty("hierarchy") final String hierarchy) {
         this.datetime = datetime;
+        this.hierarchy = hierarchy;
+        this.policy = policy;
         this.body = body;
         this.timestamp = timestamp;
         this.token = token;
@@ -55,6 +62,26 @@ public class MetadataEvent {
 
     public Body getBody() {
         return body;
+    }
+
+    public void setTimestamp(Long timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public String getPolicy() {
+        return policy;
+    }
+
+    public void setPolicy(String policy) {
+        this.policy = policy;
+    }
+
+    public String getHierarchy() {
+        return hierarchy;
+    }
+
+    public void setHierarchy(String hierarchy) {
+        this.hierarchy = hierarchy;
     }
 
     public void setBody(Body body) {

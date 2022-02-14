@@ -3,6 +3,7 @@ package contracts;
 import com.owlike.genson.Genson;
 import com.owlike.genson.GensonBuilder;
 import model.MetadataEvent;
+import model.Response;
 import org.hyperledger.fabric.Logger;
 import org.hyperledger.fabric.contract.Context;
 import org.hyperledger.fabric.contract.ContractInterface;
@@ -107,5 +108,28 @@ public final class MipsEventSaver implements ContractInterface {
             results.put(keyValue.getKey(),new String(keyValue.getValue()));
         }
         return genson.serialize(results);
+    }
+
+    @Transaction()
+    public String checkPolicyHashes(final Context ctx, final String event) {
+        ChaincodeStub stub = ctx.getStub();
+        // hash del event
+
+        //stub.getQueryResult()// get metadata del event
+
+        String s;
+
+        MetadataEvent metadataEvent = genson.deserialize(s, MetadataEvent.class);
+
+        String instance = metadataEvent.getInstance(); // TATIS
+
+        // TODO: compare
+        String policy = metadataEvent.getPolicy();
+        String hierarchy = metadataEvent.getHierarchy();
+        // get post
+
+        // compare to metadata.response
+        Response response = metadataEvent.getResponse(); // evento anonimizado hasheado
+        return "";
     }
 }
