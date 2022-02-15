@@ -1,5 +1,6 @@
 package contracts;
 
+import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.owlike.genson.Genson;
 import com.owlike.genson.GensonBuilder;
@@ -160,14 +161,9 @@ public final class MipsEventSaver implements ContractInterface {
         PrivacyPolicy privacypolicy = e.getPrivacyPolicy();
         Hierarchy hierarchypolicy = e.getHierarchypolicy();
         //aqui comprobar todo.
-        MessageDigest digest = null;
-        try {
-            digest = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException nsae) {
-            nsae.printStackTrace();
-        }
-        byte[] hashP = digest.digest(privacypolicy.toJsonString().getBytes(StandardCharsets.UTF_8));
-        byte[] hashH = digest.digest(hierarchypolicy.toJsonString().getBytes(StandardCharsets.UTF_8));
+
+        String hashP = Hashing.sha256().hashString(privacypolicy.toJsonString(), StandardCharsets.UTF_8).toString();
+        String hashH = Hashing.sha256().hashString(hierarchypolicy.toJsonString(), StandardCharsets.UTF_8).toString();
         //comprobar hashP == hash de politica en metadata
         if(!hashP.equals(blockchain_hashpolicy)){
             //TODO: error, los hashes de ficheros no coinciden
@@ -179,7 +175,7 @@ public final class MipsEventSaver implements ContractInterface {
         //si correcto, anonimizar
         //obtenidas de peticion a tatis origen
         String event_anonymised = anonymize(plain_event,privacypolicy, hierarchypolicy);
-        byte[] hashA = digest.digest(event_anonymised.getBytes(StandardCharsets.UTF_8));
+        String hashA = Hashing.sha256().hashString(event_anonymised, StandardCharsets.UTF_8).toString();
         //comprobar hashA == hash Anonimizado en blockchain
         if(!hashA.equals(hashAnon)){
             //TODO: error, los eventos anonimizados no coinciden
