@@ -26,8 +26,14 @@ import org.hyperledger.fabric.shim.ledger.QueryResultsIterator;
 import org.json.JSONObject;
 import org.json.JSONPointer;
 
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -132,36 +138,101 @@ public final class MipsEventSaver implements ContractInterface {
 
         //stub.getQueryResult()// get metadata del event
 
-        String s;
+        String s = null;
 
         MetadataEvent metadataEvent = genson.deserialize(s, MetadataEvent.class);
 
         String instance = metadataEvent.getInstance(); // TATIS
-
         // TODO: compare
-        String policy = metadataEvent.getPolicy();
-        String hierarchy = metadataEvent.getHierarchy();
+        String blockchain_hashpolicy = metadataEvent.getPolicy();
+        String blockchain_hashhierarchy = metadataEvent.getHierarchy();
         // get post
-        //solicitar evento en claro, políticas usadas
-        String event_anonymised = anonymize(null,policy, hierarchy);
-
-        //anonimizar
-
-
-        //
+        //(hash politica, hash jerarquia) -> para comprobar tras dentro de aqui
+        //que la política que se dice que tal coincide.
+        // -> get a TATIS publisher, &id_evento -> devuelve {evento, politica, jerarquia}
+        String origin = metadataEvent.getIpaddress();
+        String url = metadataEvent.getUri();
+        String responseOrigin = getFilesFromOrigin(url, event.getUuid());
+        //TODO: check what to do when response is null or error
+        Gson g = new Gson();
+        EventAnon e = g.fromJson(responseOrigin, EventAnon.class);
+        Event plain_event = e.getEvent();
+        PrivacyPolicy privacypolicy = e.getPrivacyPolicy();
+        Hierarchy hierarchypolicy = e.getHierarchypolicy();
+        //aqui comprobar todo.
+        MessageDigest digest = null;
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException nsae) {
+            nsae.printStackTrace();
+        }
+        byte[] hashP = digest.digest(privacypolicy.toJsonString().getBytes(StandardCharsets.UTF_8));
+        byte[] hashH = digest.digest(hierarchypolicy.toJsonString().getBytes(StandardCharsets.UTF_8));
+        //comprobar hashP == hash de politica en metadata
+        if(!hashP.equals(blockchain_hashpolicy)){
+            //TODO: error, los hashes de ficheros no coinciden
+        }
+        //comprobar hashH == hash de jerarquia en metadata
+        if(!hashH.equals(blockchain_hashhierarchy)){
+            //TODO: error, los hashes de ficheros no coinciden
+        }
+        //si correcto, anonimizar
+        //obtenidas de peticion a tatis origen
+        String event_anonymised = anonymize(plain_event,privacypolicy, hierarchypolicy);
+        byte[] hashA = digest.digest(event_anonymised.getBytes(StandardCharsets.UTF_8));
+        //comprobar hashA == hash Anonimizado en blockchain
+        if(!hashA.equals(hashAnon)){
+            //TODO: error, los eventos anonimizados no coinciden
+        }
+        //si bien, devuelve ok.
         // compare to metadata.response
         Response response = metadataEvent.getResponse(); // evento anonimizado hasheado
         return "";
     }
 
-    public String anonymize(Event event, String policy, String hierarchy){
-        Gson g = new Gson();
-        PrivacyPolicy pol = g.fromJson(policy, PrivacyPolicy.class);
-        Hierarchy hier = g.fromJson(hierarchy, Hierarchy.class);
+    public String getFilesFromOrigin(String domain, String eventUuid){
+        URL url;
+        try {
+            url = new URL(domain+"/anonymize/event?uuid="+eventUuid);
+            HttpURLConnection http = (HttpURLConnection)url.openConnection();
+            http.setRequestMethod("GET");
+            http.setDoOutput(true);
+            System.out.println(http.getResponseCode() + " " + http.getResponseMessage());
+            InputStream inputStream;
+            StringBuilder sb = new StringBuilder();
+            if(http.getResponseCode() == 200){
+                inputStream = http.getInputStream();
+                BufferedReader in = new BufferedReader(new InputStreamReader(inputStream));
+                String currentLine;
+                while ((currentLine = in.readLine())!=null)
+                    sb.append(currentLine);
+                in.close();
+            }else{
+                //error en la peticion o en la respuesta
+                //TODO: comprobar
+                inputStream = http.getErrorStream();
+            }
+            http.disconnect();
+            return sb.toString();
+        } catch (MalformedURLException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        } catch (ProtocolException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
+    public String anonymize(Event event, PrivacyPolicy pol, Hierarchy hier){
+
         if(event == null || pol == null || hier == null){
             return null;
         }
-
 
         EventMISP e = null;
         if (pol.isOnlyAttributes() && hier.isOnlyAttributes() && event.isOnlyAttributes()) {
