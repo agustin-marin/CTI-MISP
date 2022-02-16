@@ -48,20 +48,7 @@ public class ObjectTemplate {
 	public ObjectTemplate() {
 	}
 
-	/**
-	 *
-	 * @param requirements
-	 * @param metaCategory
-	 * @param name
-	 * @param description
-	 * @param active
-	 * @param fixed
-	 * @param id
-	 * @param userId
-	 * @param uuid
-	 * @param version
-	 * @param orgId
-	 */
+
 	/*public ObjectTemplate(String id, String userId, String orgId, String uuid, String name, String metaCategory, String description, String version, Requirements requirements, Boolean fixed, Boolean active) {
 		super();
 		this.id = id;

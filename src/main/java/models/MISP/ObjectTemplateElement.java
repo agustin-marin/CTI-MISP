@@ -48,6 +48,7 @@ public class ObjectTemplateElement {
 	public ObjectTemplateElement() {
 	}
 
+	/*
 	/**
 	 *
 	 * @param objectTemplateId

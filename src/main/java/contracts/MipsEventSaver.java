@@ -132,6 +132,50 @@ public final class MipsEventSaver implements ContractInterface {
         return genson.serialize(results);
     }
 
+    public boolean comprueba(Event event, String hashAnon){
+        String origen = "https://localhost:8443/";
+        String responseOrigin = getFilesFromOrigin(origen, event.getUuid());
+        if(responseOrigin == null){
+            //TODO: tratar error
+            //o devolver no se cumple
+        }
+        //TODO: check what to do when response is null or error
+        Gson g = new Gson();
+        EventAnon e = g.fromJson(responseOrigin, EventAnon.class);
+        Event plain_event = e.getEvent();
+        PrivacyPolicy privacypolicy = e.getPrivacyPolicy();
+        Hierarchy hierarchypolicy = e.getHierarchypolicy();
+        //aqui comprobar todo.
+
+        String hashP = Hashing.sha256().hashString(privacypolicy.toJsonString(), StandardCharsets.UTF_8).toString();
+        String hashH = Hashing.sha256().hashString(hierarchypolicy.toJsonString(), StandardCharsets.UTF_8).toString();
+        //comprobar hashP == hash de politica en metadata
+        //if(!hashP.equals(blockchain_hashpolicy)){
+            //TODO: error, los hashes de ficheros no coinciden
+            //return false;
+        //}
+        //comprobar hashH == hash de jerarquia en metadata
+        //if(!hashH.equals(blockchain_hashhierarchy)){
+            //TODO: error, los hashes de ficheros no coinciden
+            //return false;
+        //}
+        //si correcto, anonimizar
+        //obtenidas de peticion a tatis origen
+        String event_anonymised = anonymize(plain_event,privacypolicy, hierarchypolicy);
+        String hashA = Hashing.sha256().hashString(event_anonymised, StandardCharsets.UTF_8).toString();
+        //comprobar hashA == hash Anonimizado en blockchain
+        if(!hashA.equals(hashAnon)){
+            //TODO: error, los eventos anonimizados no coinciden
+        }else{
+            return true;
+        }
+        System.out.println("Si coninciden");
+        //si bien, devuelve ok.
+        // compare to metadata.response
+        return false;
+    }
+
+
     @Transaction()
     public String checkPolicyHashes(final Context ctx, final Event event, final String hashAnon) {
         ChaincodeStub stub = ctx.getStub();
@@ -154,6 +198,10 @@ public final class MipsEventSaver implements ContractInterface {
         String origin = metadataEvent.getIpaddress();
         String url = metadataEvent.getUri();
         String responseOrigin = getFilesFromOrigin(url, event.getUuid());
+        if(responseOrigin == null){
+            //TODO: tratar error
+            //o devolver no se cumple
+        }
         //TODO: check what to do when response is null or error
         Gson g = new Gson();
         EventAnon e = g.fromJson(responseOrigin, EventAnon.class);
@@ -180,6 +228,7 @@ public final class MipsEventSaver implements ContractInterface {
         if(!hashA.equals(hashAnon)){
             //TODO: error, los eventos anonimizados no coinciden
         }
+        System.out.println("Si coninciden");
         //si bien, devuelve ok.
         // compare to metadata.response
         Response response = metadataEvent.getResponse(); // evento anonimizado hasheado
