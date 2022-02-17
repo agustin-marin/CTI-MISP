@@ -225,11 +225,14 @@ public final class MipsEventSaver implements ContractInterface {
         //si correcto, anonimizar
         //obtenidas de peticion a tatis origen
         String event_anonymised = anonymize(plain_event,privacypolicy, hierarchypolicy);
-        String hashA = Hashing.sha256().hashString(event_anonymised, StandardCharsets.UTF_8).toString();
+        Event e_anon = g.fromJson(event_anonymised, EventAnon.class).getEvent();
+        setAllUuidtoNull(e_anon);
+        String hashA = Hashing.sha256().hashString(e_anon.toJsonString(), StandardCharsets.UTF_8).toString();
         //comprobar hashA == hash Anonimizado en blockchain
         if(!hashA.equals(hashAnon)){
             //TODO: error, los eventos anonimizados no coinciden
         }
+        //TODO: se supone que si llega aquí los hashes coinciden
         System.out.println("Si coninciden");
         //si bien, devuelve ok.
         // compare to metadata.response
@@ -237,7 +240,9 @@ public final class MipsEventSaver implements ContractInterface {
         return "";
     }
 
-
+    //esta función está un poco harcodeada, pero ha sido necesario para comprobar que
+    //todo ésto funciona, ya se puede incluir esta funcionalidad a la función
+    //real
     public boolean comprueba(Event event, String hashAnon, Event anonymised){
         String origen = "https://127.0.0.1:8443/";
         String responseOrigin = getFilesFromOrigin(origen, event.getUuid());
