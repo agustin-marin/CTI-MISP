@@ -27,14 +27,16 @@ import org.hyperledger.fabric.shim.ledger.QueryResultsIterator;
 import org.json.JSONObject;
 import org.json.JSONPointer;
 
+import javax.net.ssl.*;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -235,18 +237,170 @@ public final class MipsEventSaver implements ContractInterface {
         return "";
     }
 
-    public String getFilesFromOrigin(String domain, String eventUuid){
-        URL url;
+
+    public boolean comprueba(Event event, String hashAnon, Event anonymised){
+        String origen = "https://127.0.0.1:8443/";
+        String responseOrigin = getFilesFromOrigin(origen, event.getUuid());
+//        if(responseOrigin == null){
+//            //TODO: tratar error
+//            //o devolver no se cumple
+//        }
+        //TODO: check what to do when response is null or error
+        Gson g = new Gson();
+
+        EventAnon e = g.fromJson(responseOrigin, EventAnon.class);
+        Event plain_event = e.getEvent();
+        PrivacyPolicy privacypolicy = e.getPrivacyPolicy();
+        Hierarchy hierarchypolicy = e.getHierarchypolicy();
+        //aqui comprobar todo.
+
+        String hashP = Hashing.sha256().hashString(privacypolicy.toJsonString(), StandardCharsets.UTF_8).toString();
+        String hashH = Hashing.sha256().hashString(hierarchypolicy.toJsonString(), StandardCharsets.UTF_8).toString();
+        //comprobar hashP == hash de politica en metadata
+        //if(!hashP.equals(blockchain_hashpolicy)){
+        //TODO: error, los hashes de ficheros no coinciden
+        //return false;
+        //}
+        //comprobar hashH == hash de jerarquia en metadata
+        //if(!hashH.equals(blockchain_hashhierarchy)){
+        //TODO: error, los hashes de ficheros no coinciden
+        //return false;
+        //}
+        //si correcto, anonimizar
+        //obtenidas de peticion a tatis origen
+        String event_anonymised = anonymize(plain_event,privacypolicy, hierarchypolicy);
+        Event e_anon = g.fromJson(event_anonymised, EventAnon.class).getEvent();
+        System.out.println("EQUALS " + e_anon.equals(anonymised));
+        System.out.println("E_ANON " + e_anon.toJsonString());
+        System.out.println("ANONYMISED " + anonymised.toJsonString());
+        setAllUuidtoNull(e_anon);
+        String hashA = Hashing.sha256().hashString(e_anon.toJsonString(), StandardCharsets.UTF_8).toString();
+        //comprobar hashA == hash Anonimizado en blockchain
+        if(!hashA.equals(hashAnon)){
+            //TODO: error, los eventos anonimizados no coinciden
+            return false;
+        }else{
+            return true;
+        }
+        //si bien, devuelve ok.
+        // compare to metadata.response
+    }
+
+    public SSLSocketFactory trustAllCerts() {
+        final TrustManager[] trustAllCerts = new TrustManager[]{
+                new X509TrustManager() {
+                    @Override
+                    public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) {
+                        // nothing to do
+                    }
+
+                    @Override
+                    public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) {
+                        // nothing to do
+                    }
+
+                    @Override
+                    public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                        return new java.security.cert.X509Certificate[]{};
+                    }
+                }
+        };
+
         try {
-            url = new URL(domain+"/anonymize/event?uuid="+eventUuid);
-            HttpURLConnection http = (HttpURLConnection)url.openConnection();
+            final SSLContext sslContext = SSLContext.getInstance("SSL");
+            sslContext.init(null, trustAllCerts, new SecureRandom());
+            final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+            return sslSocketFactory;
+        } catch (NoSuchAlgorithmException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (KeyManagementException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public SSLContext trustCert(String location) {
+        File crtFile = new File(location);
+        java.security.cert.Certificate certificate = null;
+        try {
+            certificate = CertificateFactory.getInstance("X.509").generateCertificate(new FileInputStream(crtFile));
+        } catch (CertificateException | FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        // Or if the crt-file is packaged into a jar file:
+        // CertificateFactory.getInstance("X.509").generateCertificate(this.class.getClassLoader().getResourceAsStream("server.crt"));
+
+
+        KeyStore keyStore = null;
+        try {
+            keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            keyStore.load(null, null);
+            keyStore.setCertificateEntry("anonymizer", certificate);
+
+        } catch (KeyStoreException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (CertificateException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        TrustManagerFactory trustManagerFactory = null;
+        try {
+            trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            trustManagerFactory.init(keyStore);
+        } catch (NoSuchAlgorithmException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (KeyStoreException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        SSLContext sslContext;
+        try {
+            sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, trustManagerFactory.getTrustManagers(), null);
+            return sslContext;
+        } catch (NoSuchAlgorithmException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (KeyManagementException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public String getFilesFromOrigin(String domain, String eventUuid){
+//    	Path currentpath = Paths.get("");
+//		String s = currentpath.toAbsolutePath().toString();
+//		final String location = s + "/AnonymizerCert/anonymizer.crt";
+//		System.out.println(location);
+//    	SSLContext context = trustCert(location);
+        SSLSocketFactory sf = trustAllCerts();
+        URL url = null;
+        try {
+            url = new URL(domain+"/anonymizer/event?uuid="+eventUuid);
+            System.out.println(domain+"anonymize/event?uuid="+eventUuid);
+            HttpsURLConnection http = (HttpsURLConnection)url.openConnection();
+            http.setSSLSocketFactory(sf);
+            http.setHostnameVerifier((hostname, session) -> true);
             http.setRequestMethod("GET");
             http.setDoOutput(true);
             System.out.println(http.getResponseCode() + " " + http.getResponseMessage());
             InputStream inputStream;
             StringBuilder sb = new StringBuilder();
             if(http.getResponseCode() == 200){
-                inputStream = http.getInputStream();
+                inputStream =  http.getInputStream();
                 BufferedReader in = new BufferedReader(new InputStreamReader(inputStream));
                 String currentLine;
                 while ((currentLine = in.readLine())!=null)
@@ -258,6 +412,7 @@ public final class MipsEventSaver implements ContractInterface {
                 inputStream = http.getErrorStream();
             }
             http.disconnect();
+            System.out.println("PETICION ENVIADA " + sb.toString());
             return sb.toString();
         } catch (MalformedURLException e1) {
             // TODO Auto-generated catch block
@@ -271,7 +426,6 @@ public final class MipsEventSaver implements ContractInterface {
         }
         return null;
     }
-
 
     public String anonymize(Event event, PrivacyPolicy pol, Hierarchy hier){
 
@@ -304,12 +458,12 @@ public final class MipsEventSaver implements ContractInterface {
             // TODO: en el frontend, tirar mensaje de que los ficheros no son concordantes
             // los dos ficheros no concuerdan
             //out.println(
-                    //"Error(1): The files are not concordant, all files has to be either only attributes or only objects");
+            //"Error(1): The files are not concordant, all files has to be either only attributes or only objects");
             return null;
         }
     }
-//---------------------------------------FUNCIONALIDAD DE ANONIMIZACIÓN------------------------------------------------------------------------
-    private EventMISP apply_privacy(Event event, PrivacyPolicy pol, models.Policies.Hierarchy hier,
+    //---------------------------------------FUNCIONALIDAD DE ANONIMIZACIÓN------------------------------------------------------------------------
+    private EventMISP apply_privacy(Event event, PrivacyPolicy pol, Hierarchy hier,
                                     boolean only_attributes) {
         long ianon = System.currentTimeMillis();
         // check if attr or objects
@@ -626,7 +780,7 @@ public final class MipsEventSaver implements ContractInterface {
 
 
 
-    private void setStaticHierarchies(models.Policies.Hierarchy hier, String k, ArrayList<String> quasi_and_hierachical,
+    private void setStaticHierarchies(Hierarchy hier, String k, ArrayList<String> quasi_and_hierachical,
                                       HashMap<String, AttributeType.Hierarchy.DefaultHierarchy> att_hierarchy) {
         // set static hierarchies
         for (Hierarchy_Object ho : hier.getHierarchyObjects()) {
@@ -712,6 +866,22 @@ public final class MipsEventSaver implements ContractInterface {
             // TODO: handle exception
             e.printStackTrace();
         }
+    }
+
+    private void setAllUuidtoNull(Event e) {
+        if(e.isOnlyAttributes()) {
+            for(Attribute a : e.getAttribute()) {
+                a.setUuid(null);
+            }
+        }else {
+            for(Object o : e.getObject()) {
+                o.setUuid(null);
+                for(Attribute a : o.getAttribute()) {
+                    a.setUuid(null);
+                }
+            }
+        }
+        return;
     }
 
     private void setNewValuesAttributes(ARXResult result, Data.DefaultData data, Event event) {
