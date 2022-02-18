@@ -111,7 +111,18 @@ public class PrivacyPolicy {
 		}
 		return list;
 	}
-	
+
+	//return hashmap with name of attribute and level in case it has all supression or all generalization scheme
+	public HashMap<String, Integer> attLevelSupression(){
+		HashMap<String, Integer> list = new HashMap<>();
+		for(AttPolicy ap : attributes){
+			Pet pet = ap.getPets().get(0);
+			String scheme = pet.getScheme();
+			if(scheme.equals("supression") || scheme.equals("generalization")) list.put(ap.getName(), pet.getLevel());
+		}
+		return list;
+	}
+
 	//return 0 in case dont have k-anonimity
 	public Integer attGetK(String attname) {
 		for(AttPolicy ap : attributes) {
@@ -204,7 +215,21 @@ public class PrivacyPolicy {
 		
 		return false;
 	}
-	
+
+	//return Level of suppression if it's a suppresion attribute, null otherwise
+	public Integer isSuppresion(String object_name, String attribute_name){
+		for(Template template : this.templates){
+			if(template.getName().equals(object_name)){
+				AttPolicy ap = template.getAttribute(attribute_name);
+				Pet pet = ap.getPets().get(0);
+				if(pet.getScheme().equals("suppresion")){
+					return pet.getLevel();
+				}
+			}
+		}
+		return null;
+	}
+
     public String toJsonString(){
         Gson gson = new GsonBuilder().disableHtmlEscaping().create();
         return gson.toJson(this);

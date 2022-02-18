@@ -483,6 +483,7 @@ public final class MipsEventSaver implements ContractInterface {
 
             // att name and pet we must apply
             HashMap<String, String> att_pet = pol.attNamePet();
+            HashMap<String, Integer> att_level = pol.attLevelSupression();
 
             ArrayList<String> quasi = new ArrayList<String>(); // quasi k-anonimity
 
@@ -502,6 +503,7 @@ public final class MipsEventSaver implements ContractInterface {
                 }
                 att_kanon.put(attname, k);
             }
+
 
             for(Map.Entry<String, Integer> entry : att_kanon.entrySet()) {
                 // apply transformation for each attribute
@@ -545,6 +547,10 @@ public final class MipsEventSaver implements ContractInterface {
                     // retrieve dynamic hierarchies
                     boolean f_regex = type.equals("regex");
                     boolean f_interval = type.equals("interval");
+                    //new schemes
+                    boolean f_supression = att_pet.get(entry.getKey()).equals("supression");
+                    boolean f_generalization = att_pet.get(entry.getKey()).equals("generalization");
+                    //
                     // dynamic match and replace for *
                     Att_indv ai = hier.getAttIndv(entry.getKey());
                     for (Attribute a : event.getAttributes()) {
@@ -562,6 +568,12 @@ public final class MipsEventSaver implements ContractInterface {
                             } else if (f_interval) {
                                 t = generate_interval_hierarchy(ai, a);
                                 hierarchy.add(t);
+                            } else if(f_supression){
+                                //supression in all values, set att value to the result of applying regex over original value
+                                String new_att_value = getSupression(ai, a, att_level.get(entry.getKey()));
+                                a.setValue(new_att_value);
+                            }else if(f_generalization){
+                                //generalization in all values
                             }
 
                         }
@@ -686,7 +698,7 @@ public final class MipsEventSaver implements ContractInterface {
                     this.setStaticHierarchies(hier, entry.getKey(), quasi_and_hierachical, att_hierarchy);
 
                     // _______> jerarquias dinamicas
-                    this.setDinamicHierarchies(event, entry.getKey(), entry.getValue(), objectHierarchy, quasi_and_hierachical, atts_quasi,
+                    this.setDinamicHierarchies(event, entry.getKey(), entry.getValue(), objectHierarchy, objectPolicy, quasi_and_hierachical, atts_quasi,
                             att_hierarchy, data);
 
                     // add hierarchies to data algorithm
@@ -734,6 +746,19 @@ public final class MipsEventSaver implements ContractInterface {
             return new EventMISP(event);
         }
 
+    }
+
+    //return new att value after aplying correspondant regex to original att value
+    private String getSupression(Att_indv ai, Attribute a, Integer level){
+        try {
+            String regex = ai.getAttributeGeneralization().get(0).getRegex().get(level-1);
+            String value = a.getValue();
+            String replace = value.replaceAll(regex, "*");
+            return replace;
+        }catch (Exception e){
+            //null pointer or every other error
+            return null;
+        }
     }
 
     private void setSensitivePet(String nameatt, String k, PrivacyPolicy pol,
@@ -804,7 +829,7 @@ public final class MipsEventSaver implements ContractInterface {
         }
     }
 
-    private void setDinamicHierarchies(Event event, String k, ArrayList<String> v, Hierarchy_Object ho,
+    private void setDinamicHierarchies(Event event, String k, ArrayList<String> v, Hierarchy_Object ho, Template object_policy,
                                        ArrayList<String> quasi_and_hierachical, HashMap<String, String> atts_quasi,
                                        HashMap<String, AttributeType.Hierarchy.DefaultHierarchy> att_hierarchy, Data.DefaultData data) {
         // jerarquía añadida
@@ -825,6 +850,9 @@ public final class MipsEventSaver implements ContractInterface {
 //						System.out.println("V " + s);
 //					}
                     System.out.println("Object relation " + a.getObject_relation() + v.indexOf(a.getObject_relation()));
+                    //TODO: -> antes de aquí setear valores de supresion y generalización
+                    Integer suppresion_level;
+                    //
                     value_elements[v.indexOf(a.getObject_relation()) + 1] = a.getValue(); // beacuse of uuid added in
                     // dataset
                     if (quasi_and_hierachical.contains(a.getObject_relation())
@@ -841,6 +869,16 @@ public final class MipsEventSaver implements ContractInterface {
                         String[] t = generate_interval_hierarchy(ai, a);
                         // hierarchy.add(t);
                         att_hierarchy.get(a.getObject_relation()).add(t);
+                    }else if((suppresion_level = object_policy.isSuppresion(k, a.getObject_relation())) != null){
+                        //TODO: mejorable en eficiencia, ya que la función is suppresion recorre la estructura de pol
+                        //es suppresion
+                        Att_indv ai = ho.getAttributeIndv(a.getObject_relation());
+                        String replace = getSupression(ai, a, suppresion_level);
+                        if(replace == null){
+                            //TODO: error
+                        }
+                        //set new value
+                        a.setValue(replace);
                     }
                 }
                 data.add(value_elements);

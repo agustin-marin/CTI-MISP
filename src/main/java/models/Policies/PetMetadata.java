@@ -14,8 +14,13 @@ public class PetMetadata {
 			@SerializedName("l")
 			@Expose
 			private Integer l;
-			
-			public Integer getL() {
+
+			@SerializedName("level")
+			@Expose
+			private Integer level;
+
+
+	public Integer getL() {
 				return l;
 			}
 
@@ -28,9 +33,9 @@ public class PetMetadata {
 			private Integer c;	//for l-diversity recursive(c,l)
 			
 
-			@SerializedName("level")
-			@Expose
-			private String level;
+			//@SerializedName("level")
+			//@Expose
+			//private String level;
 			
 
 			public Integer getC() {
@@ -73,11 +78,11 @@ public class PetMetadata {
 				this.t = t;
 			}
 
-			public String getLevel() {
+			public Integer getLevel() {
 			return level;
 			}
 
-			public void setLevel(String level) {
+			public void setLevel(Integer level) {
 			this.level = level;
 			}
 

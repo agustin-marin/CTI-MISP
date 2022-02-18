@@ -1,6 +1,7 @@
 package models.Policies;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import com.google.gson.Gson;
@@ -147,7 +148,7 @@ public class Hierarchy{
 		
 		return false;
 	}
-	
+
 	public String toJsonString() {
 		Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 		return gson.toJson(this);

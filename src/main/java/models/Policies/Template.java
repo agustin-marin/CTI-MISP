@@ -170,7 +170,18 @@ public class Template {
 		}
 		return null;
 	}
-	
+
+	//return Level of suppression if it's a suppresion attribute, null otherwise
+	public Integer isSuppresion(String object_name, String attribute_name){
+				AttPolicy ap = this.getAttribute(attribute_name);
+				Pet pet = ap.getPets().get(0);
+				if(pet.getScheme().equals("suppresion")){
+					return pet.getLevel();
+				}
+		return null;
+	}
+
+
     public String toJsonString(){
         Gson gson = new GsonBuilder().disableHtmlEscaping().create();
         return gson.toJson(this);
