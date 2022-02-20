@@ -231,13 +231,14 @@ public final class MipsEventSaver implements ContractInterface {
         //comprobar hashA == hash Anonimizado en blockchain
         if(!hashA.equals(hashAnon)){
             //TODO: error, los eventos anonimizados no coinciden
+            return "Error: Event hashes are not equal";
         }
         //TODO: se supone que si llega aquí los hashes coinciden
         System.out.println("Si coninciden");
         //si bien, devuelve ok.
         // compare to metadata.response
-        Response response = metadataEvent.getResponse(); // evento anonimizado hasheado
-        return "";
+         Response response = metadataEvent.getResponse(); // evento anonimizado hasheado
+        return "OK";
     }
 
     //esta función está un poco harcodeada, pero ha sido necesario para comprobar que
@@ -591,7 +592,7 @@ public final class MipsEventSaver implements ContractInterface {
                 try {
                     result = anonymizer.anonymize(data, config);
                 } catch (IOException e) {
-                    // TODO: ERROR ANONIMIZACIÓN, DEVOLVER ERROR PARA ATRÁS
+                    // TODO: ERROR ANONIMIZACIÓN, DEVOLVER ERROR PARA ATRAS
                     return null;
                 }
 
@@ -736,7 +737,7 @@ public final class MipsEventSaver implements ContractInterface {
                     try {
                         result = anonymizer.anonymize(data, config);
                     } catch (IOException e) {
-                        // TODO: ERROR ANONIMIZACIÓN, DEVOLVER PARA ATRÁS
+                        // TODO: ERROR ANONIMIZACIÓN, DEVOLVER PARA ATRAS
                         return null;
                     }
                     //replace values in objects of event
