@@ -1002,6 +1002,7 @@ public final class MipsEventSaver implements ContractInterface {
                         //set new value
                         a.setValue(replace);
                     }else if((suppresion_level = object_policy.isGeneralization(k, a.getObject_relation())) != null){
+                        //TODO: mejorar en eficiencia en estos dos ultimos if - NECESARIO
                         //caso de atributos cuya política sea de generalizacion
                         Att_indv ai = ho.getAttributeIndv(a.getObject_relation());
                         switch (ai.getAttributeType()){
