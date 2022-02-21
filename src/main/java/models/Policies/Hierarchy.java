@@ -104,6 +104,15 @@ public class Hierarchy{
 		this.uuid = uuid;
 	}
 
+	//return name and type of hierarchy
+	public HashMap<String, String> attgetTypes(){
+		HashMap<String, String> list = new HashMap<>();
+		for(Att_indv ai : this.getHierarchyAttributes()){
+			list.put(ai.getAttributeName(), ai.getAttributeType());
+		}
+		return list;
+	}
+
 	public String getTypeOfAttribute(String name) {
 		for(Att_indv ai : hierarchyAttributes) {
 			if(ai.getAttributeName().equals(name)) {

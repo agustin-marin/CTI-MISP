@@ -181,8 +181,18 @@ public class Template {
 		return null;
 	}
 
+	public Integer isGeneralization(String object_name, String attribute_name){
+		AttPolicy ap = this.getAttribute(attribute_name);
+		Pet pet = ap.getPets().get(0);
+		if(pet.getScheme().equals("generalization")){
+			return pet.getLevel();
+		}
+		return null;
+	}
 
-    public String toJsonString(){
+
+
+	public String toJsonString(){
         Gson gson = new GsonBuilder().disableHtmlEscaping().create();
         return gson.toJson(this);
     }
