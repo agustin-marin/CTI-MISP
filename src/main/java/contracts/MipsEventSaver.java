@@ -485,7 +485,7 @@ public final class MipsEventSaver implements ContractInterface {
                 //sustituir
                 String rturn;
                 try {
-                    rturn = a_gn.getGeneralization().get(level);
+                    rturn = a_gn.getGeneralization().get(level-1);
                 }catch(IndexOutOfBoundsException e){
                     return null;
                 }
