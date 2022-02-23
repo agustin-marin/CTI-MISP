@@ -469,6 +469,107 @@ public final class MipsEventSaver implements ContractInterface {
         }
     }
     //---------------------------------------FUNCIONALIDAD DE ANONIMIZACIÓN------------------------------------------------------------------------
+
+    private EventMISP alternative_anonymization(Event event, PrivacyPolicy policy, Hierarchy hierarchy){
+        HashMap<String, String> attributePolicyPet = policy.attNamePet();
+        HashMap<String, String> attributeHierarchyType = hierarchy.attgetTypes();
+
+        for(Attribute attribute : event.getAttributes()){
+
+        }
+        return null;
+    }
+
+    private String getGeneralization(Att_indv ai, Attribute a, Integer level){
+        for(Att_gn a_gn : ai.getAttributeGeneralization()){
+            if(a_gn.getGeneralization().get(0).equals(a.getValue())){
+                //sustituir
+                String rturn;
+                try {
+                    rturn = a_gn.getGeneralization().get(level-1);
+                }catch(IndexOutOfBoundsException e){
+                    return null;
+                }
+                return rturn;
+            }
+        }
+        return null;
+    }
+
+    //for object of event of objects
+    private void replaceSuppresionGeneralization(Object object, HashMap<String, Integer> att_level, HashMap<String, String> att_pet, Hierarchy hier){
+        for(Attribute attribute : object.getAttribute()){
+            String attribute_name = attribute.getObject_relation();
+            if(att_level.containsKey(attribute_name)){
+                String pet = att_pet.get(attribute_name);
+                switch (pet){
+                    case "supression":
+                        //TODO: comprobación de tipo de jerarquía correcto
+                        Att_indv ai = hier.getAttIndv(attribute_name);
+                        if(! ai.getAttributeType().equals("regex")){
+                            //TODO: tirar error, la supresion debe ir por
+                            //TODO: regex.
+                        }
+                        String replace = getSupression(hier.getAttIndv(attribute_name),
+                                attribute, att_level.get(attribute_name));
+                        attribute.setValue(replace);
+                        break;
+                    case "generalization":
+                        Att_indv hi = hier.getAttIndv(attribute_name);
+                        if(hi.getAttributeType().equals("static")){
+                            String replc = getGeneralization(hi, attribute, att_level.get(attribute_name));
+                            attribute.setValue(replc);
+                        }else if(hi.getAttributeType().equals("interval")){
+                            String interval = generalize_interval(hi, attribute, att_level.get(attribute_name));
+                            attribute.setValue(interval);
+                        }else{
+                            //TODO: error porque debería de ser de estos tipos
+                        }
+                        break;
+                    default:
+                        //TODO: no tiene porque entrar aqui
+                        break;
+                }
+            }
+        }
+    }
+
+    private void replaceSuppresionGeneralization(Event event, HashMap<String, Integer> att_level, HashMap<String, String> att_pet, Hierarchy hier){
+        for(Attribute attribute : event.getAttributes()){
+            String attribute_name = attribute.getObject_relation();
+            if(att_level.containsKey(attribute_name)){
+                String pet = att_pet.get(attribute_name);
+                switch (pet){
+                    case "supression":
+                        //TODO: comprobación de tipo de jerarquía correcto
+                        Att_indv ai = hier.getAttIndv(attribute_name);
+                        if(! ai.getAttributeType().equals("regex")){
+                            //TODO: tirar error, la supresion debe ir por
+                            //TODO: regex.
+                        }
+                        String replace = getSupression(hier.getAttIndv(attribute_name),
+                                attribute, att_level.get(attribute_name));
+                        attribute.setValue(replace);
+                        break;
+                    case "generalization":
+                        Att_indv hi = hier.getAttIndv(attribute_name);
+                        if(hi.getAttributeType().equals("static")){
+                            String replc = getGeneralization(hi, attribute, att_level.get(attribute_name));
+                            attribute.setValue(replc);
+                        }else if(hi.getAttributeType().equals("interval")){
+                            String interval = generalize_interval(hi, attribute, att_level.get(attribute_name));
+                            attribute.setValue(interval);
+                        }else{
+                            //TODO: error porque debería de ser de estos tipos
+                        }
+                        break;
+                    default:
+                        //TODO: no tiene porque entrar aqui
+                        break;
+                }
+            }
+        }
+    }
     private EventMISP apply_privacy(Event event, PrivacyPolicy pol, Hierarchy hier,
                                     boolean only_attributes) {
         long ianon = System.currentTimeMillis();
@@ -484,14 +585,22 @@ public final class MipsEventSaver implements ContractInterface {
 
             // att name and pet we must apply
             HashMap<String, String> att_pet = pol.attNamePet();
+            HashMap<String, String> attribute_hierarchy = hier.attgetTypes();
             HashMap<String, Integer> att_level = pol.attLevelSupression();
 
             ArrayList<String> quasi = new ArrayList<String>(); // quasi k-anonimity
+
+            //replacing suppresion and generalization value
+            replaceSuppresionGeneralization(event, att_level, att_pet, hier);
+            //---------------------------------------------------------
 
             att_pet.forEach((name, pet) -> {
                 if (pet.contains("k-anonimity") && hasHierarchy.contains(name)) {
                     //if has policy and hierarchy apply
                     quasi.add(name);
+                }else if(pet.contains("k-anonimity") && ! hasHierarchy.contains(name)){
+                    //TODO: esto es un error, una politica que indica aplicar k-anonymity
+                    //TODO: pero no hay jerarquia que lo permita
                 }
             });
 
@@ -569,13 +678,26 @@ public final class MipsEventSaver implements ContractInterface {
                             } else if (f_interval) {
                                 t = generate_interval_hierarchy(ai, a);
                                 hierarchy.add(t);
-                            } else if(f_supression){
+                            }/* else if(f_supression){
                                 //supression in all values, set att value to the result of applying regex over original value
                                 String new_att_value = getSupression(ai, a, att_level.get(entry.getKey()));
                                 a.setValue(new_att_value);
                             }else if(f_generalization){
-                                //generalization in all values
-                            }
+                                //generalization in all values, 2 options, interval o static
+                                String check_type = attribute_hierarchy.get(entry.getKey());
+                                switch (check_type){
+                                    case "interval":
+                                        String interval = generalize_interval(ai, a, att_level.get(entry.getKey()));
+                                        a.setValue(interval);
+                                        break;
+                                    case "static":
+
+                                        break;
+                                    default:
+                                        break;
+                                }
+
+                            }*/
 
                         }
                     }
@@ -880,6 +1002,23 @@ public final class MipsEventSaver implements ContractInterface {
                         }
                         //set new value
                         a.setValue(replace);
+                    }else if((suppresion_level = object_policy.isGeneralization(k, a.getObject_relation())) != null){
+                        //TODO: mejorar en eficiencia en estos dos ultimos if - NECESARIO
+                        //caso de atributos cuya política sea de generalizacion
+                        Att_indv ai = ho.getAttributeIndv(a.getObject_relation());
+                        switch (ai.getAttributeType()){
+                            case "static":
+                                String replace = getGeneralization(ai, a, suppresion_level);
+                                a.setValue(replace);
+                                break;
+                            case "interval":
+                                String rplace = generalize_interval(ai, a, suppresion_level);
+                                a.setValue(rplace);
+                                break;
+                            default:
+                                //TODO: no deberia entrar aquí, si lo hace es por un error en el fichero de jerarquías
+                                break;
+                        }
                     }
                 }
                 data.add(value_elements);
@@ -978,6 +1117,60 @@ public final class MipsEventSaver implements ContractInterface {
             System.out.println("IT aindv " + ai.getAttributeName() + " " + it);
         }
         return t;
+    }
+
+    //return string that references interval that replace original value
+    private String generalize_interval(Att_indv ai, Attribute a, Integer level){
+        Pattern lessthan = Pattern.compile("<([0-9]+)");
+        Pattern lessEqualthan = Pattern.compile("<=([0-9]+)");
+        Pattern biggerthan = Pattern.compile(">([0-9]+)");
+        Pattern biggerEqualthan = Pattern.compile(">=([0-9]+)");
+        Pattern interval = Pattern.compile("([0-9]+)-([0-9]+)");
+        String rturn = null;
+        Att_gn g = ai.getAttributeGeneralization().get(level);
+            // add the level of generalization according number
+            for (String comparison : g.getInterval()) {
+                Matcher mlt = lessthan.matcher(comparison);
+                Matcher mlet = lessEqualthan.matcher(comparison);
+                Matcher mbt = biggerthan.matcher(comparison);
+                Matcher mbet = biggerEqualthan.matcher(comparison);
+                Matcher mi = interval.matcher(comparison);
+                Integer number_value = Integer.valueOf(a.getValue());
+                if (mlt.matches()) {
+                    if (number_value < Integer.valueOf(mlt.group(1))) {
+                        rturn = comparison;
+                        System.out.println("Añadiendo < que");
+                        break;
+                    }
+                } else if (mlet.matches()) {
+                    if (number_value <= Integer.valueOf(mlet.group(1))) {
+                        rturn = comparison;
+                        System.out.println(number_value + "Añadiendo <= que");
+                        break;
+                    }
+                } else if (mbt.matches()) {
+                    if (number_value > Integer.valueOf(mbt.group(1))) {
+                        rturn = comparison;
+                        System.out.println(number_value + "Añadiendo > que");
+                        break;
+                    }
+                } else if (mbet.matches()) {
+                    if (number_value >= Integer.valueOf(mbet.group(1))) {
+                        rturn = comparison;
+                        System.out.println(number_value + "Añadiendo >= que");
+                        break;
+                    }
+                } else {
+                    // interval
+                    System.out.println("MATCHEA " + mi.matches());
+                    if (number_value >= Integer.valueOf(mi.group(1)) && number_value <= Integer.valueOf(mi.group(2))) {
+                        rturn = comparison;
+                        System.out.println(number_value + "Añadiendo intervalo " + comparison);
+                        break;
+                    }
+                }
+            }
+        return rturn;
     }
 
     private String[] generate_interval_hierarchy(Att_indv ai, Attribute a) {

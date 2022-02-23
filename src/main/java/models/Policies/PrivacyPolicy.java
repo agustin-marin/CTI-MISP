@@ -118,7 +118,7 @@ public class PrivacyPolicy {
 		for(AttPolicy ap : attributes){
 			Pet pet = ap.getPets().get(0);
 			String scheme = pet.getScheme();
-			if(scheme.equals("supression") || scheme.equals("generalization")) list.put(ap.getName(), pet.getLevel());
+			if(scheme.equals("suppression") || scheme.equals("generalization")) list.put(ap.getName(), pet.getLevel());
 		}
 		return list;
 	}
