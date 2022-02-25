@@ -242,7 +242,7 @@ public class Anonymizer {
             if(att_level.containsKey(attribute_name)){
                 String pet = att_pet.get(attribute_name);
                 switch (pet){
-                    case "supression":
+                    case "suppression":
                         //TODO: comprobación de tipo de jerarquía correcto
                         Att_indv ai = hier.getAttIndv(attribute_name);
                         if(! ai.getAttributeType().equals("regex")){
@@ -279,7 +279,7 @@ public class Anonymizer {
             if(att_level.containsKey(attribute_name)){
                 String pet = att_pet.get(attribute_name);
                 switch (pet){
-                    case "supression":
+                    case "suppression":
                         //TODO: comprobación de tipo de jerarquía correcto
                         Att_indv ai = hier.getAttIndv(attribute_name);
                         if(! ai.getAttributeType().equals("regex")){
@@ -615,7 +615,14 @@ public class Anonymizer {
         try {
             String regex = ai.getAttributeGeneralization().get(0).getRegex().get(level-1);
             String value = a.getValue();
-            String replace = value.replaceAll(regex, "*");
+            String problems = "("+regex+")";
+            Pattern p = Pattern.compile(problems);
+            Matcher m = p.matcher(value);
+            if(m.find()) {
+                System.out.println("SI TIENE QUE MATCHEAR " + m.group(1));
+            }
+            String replace = value.replaceAll(regex, "*".repeat(m.group(1).length()));
+            System.out.println("REPLACE " + replace);
             return replace;
         }catch (Exception e){
             //null pointer or every other error
