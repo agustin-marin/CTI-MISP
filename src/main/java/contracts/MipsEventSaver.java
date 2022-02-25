@@ -7,41 +7,21 @@ import com.owlike.genson.Genson;
 import com.owlike.genson.GensonBuilder;
 import model.MetadataEvent;
 import model.Response;
-import models.MISP.Attribute;
 import models.MISP.Event;
-import models.MISP.EventMISP;
-import models.MISP.Object;
 import models.Policies.*;
-import org.deidentifier.arx.*;
-import org.deidentifier.arx.criteria.*;
-import org.hyperledger.fabric.Logger;
 import org.hyperledger.fabric.contract.Context;
 import org.hyperledger.fabric.contract.ContractInterface;
 import org.hyperledger.fabric.contract.annotation.Contract;
 import org.hyperledger.fabric.contract.annotation.Default;
 import org.hyperledger.fabric.contract.annotation.Info;
 import org.hyperledger.fabric.contract.annotation.Transaction;
-import org.hyperledger.fabric.shim.ChaincodeException;
 import org.hyperledger.fabric.shim.ChaincodeStub;
 import org.hyperledger.fabric.shim.ledger.KeyValue;
 import org.hyperledger.fabric.shim.ledger.QueryResultsIterator;
 import org.json.JSONObject;
-import org.json.JSONPointer;
 
-import javax.net.ssl.*;
-import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.security.*;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.text.DecimalFormat;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.hyperledger.fabric.Logger.getLogger;
 
@@ -64,15 +44,18 @@ public final class MipsEventSaver implements ContractInterface {
 
     /**
      * Store event in the ledger
-     * @param  metadataEvent all data related to the event generated to publish.
+     * @param  metadataEventstring all data related to the event generated to publish.
      * @return the same metadataEvent received.
      */
     @Transaction()
-    public MetadataEvent putEventMetaData(final Context ctx, final MetadataEvent metadataEvent) {
+    public String putEventMetaData(final Context ctx, final String key, final  String metadataEventstring) {
+
+        MetadataEvent metadataEvent = genson.deserialize(metadataEventstring, MetadataEvent.class);
         ChaincodeStub stub = ctx.getStub();
-        String key = metadataEvent.getBody()+"_" + metadataEvent.getTimestamp();
+        String serialize = genson.serialize(metadataEvent);
+        System.out.println("RESULT: "+ serialize);
         stub.putStringState(key, genson.serialize(metadataEvent));
-        return metadataEvent;
+        return serialize;
     }
 
 
@@ -91,6 +74,15 @@ public final class MipsEventSaver implements ContractInterface {
             return deserialize;
         }
         else return null;
+    }
+
+    @Transaction()
+    public MetadataEvent getMetadataByKey(final Context ctx, final String uuid, final String date){
+        ChaincodeStub stub = ctx.getStub();
+
+        String result = stub.getStringState(uuid + "_" + date);
+        System.out.println("RESULT: "+result);
+        return genson.deserialize(result, MetadataEvent.class);
     }
     /**
      * query a metadataEvent from the ledger based on the metadata filled elements filled on the parameter. (element
@@ -150,14 +142,14 @@ public final class MipsEventSaver implements ContractInterface {
         return genson.serialize(results);
     }
     @Transaction()
-    public String checkPolicyHashes(final Context ctx, final Event event, final String hashAnon) {
+    public String checkPolicyHashes(final Context ctx, final String eventString, final String uuid, final String date) {
         ChaincodeStub stub = ctx.getStub();
         // hash del event
 
         //stub.getQueryResult()// get metadata del event
 
         String s = null;
-        MetadataEvent metadataEvent = getMetadataByHash(ctx, hashAnon);
+        MetadataEvent metadataEvent = getMetadataByKey(ctx, uuid, date);
         // TODO: compare
         String blockchain_hashpolicy = metadataEvent.getPolicy();
         String blockchain_hashhierarchy = metadataEvent.getHierarchy();
@@ -166,9 +158,10 @@ public final class MipsEventSaver implements ContractInterface {
         //que la política que se dice que tal coincide.
         // -> get a TATIS publisher, &id_evento -> devuelve {evento, politica, jerarquia}
         String url = metadataEvent.getInstance();
+        String hashAnon = metadataEvent.getResponse().getSha256();
 
         Anonymizer anonymizer = new Anonymizer();
-
+        Event event = genson.deserialize(eventString, Event.class);
         String responseOrigin = anonymizer.getFilesFromOrigin(url, event.getUuid());
         if(responseOrigin == null){
             //TODO: tratar error
@@ -196,10 +189,16 @@ public final class MipsEventSaver implements ContractInterface {
         //obtenidas de peticion a tatis origen
         String event_anonymised = anonymizer.anonymize(plain_event,privacypolicy, hierarchypolicy);
         Event e_anon = g.fromJson(event_anonymised, EventAnon.class).getEvent();
+        System.out.println("e_anon: "+e_anon.toJsonString());
         anonymizer.setAllUuidtoNull(e_anon);
+        System.out.println("e_anon: "+e_anon.toJsonString());
         String hashA = Hashing.sha256().hashString(e_anon.toJsonString(), StandardCharsets.UTF_8).toString();
         //comprobar hashA == hash Anonimizado en blockchain
+
         if(!hashA.equals(hashAnon)){
+            System.out.println("No Coinciden los hashes\n"+
+            "HASH - A: "+ hashA + "\n"+
+            "HASH - B: "+ hashAnon);
             //TODO: error, los eventos anonimizados no coinciden
             return "Error: Event hashes are not equal";
         }

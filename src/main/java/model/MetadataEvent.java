@@ -11,7 +11,7 @@ public class MetadataEvent {
     private String datetime;
 
     @Property
-    private Long timestamp;
+    private long timestamp;
 
     @Property
     private Token token;
