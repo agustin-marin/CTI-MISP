@@ -135,7 +135,7 @@ public class Anonymizer {
         URL url = null;
         try {
             url = new URL(domain+"/anonymizer/event?uuid="+eventUuid);
-            System.out.println(domain+"anonymize/event?uuid="+eventUuid);
+            System.out.println(domain+"/anonymize/event?uuid="+eventUuid);
             HttpsURLConnection http = (HttpsURLConnection)url.openConnection();
             http.setSSLSocketFactory(sf);
             http.setHostnameVerifier((hostname, session) -> true);
@@ -242,7 +242,7 @@ public class Anonymizer {
             if(att_level.containsKey(attribute_name)){
                 String pet = att_pet.get(attribute_name);
                 switch (pet){
-                    case "supression":
+                    case "suppression":
                         //TODO: comprobación de tipo de jerarquía correcto
                         Att_indv ai = hier.getAttIndv(attribute_name);
                         if(! ai.getAttributeType().equals("regex")){
@@ -279,7 +279,7 @@ public class Anonymizer {
             if(att_level.containsKey(attribute_name)){
                 String pet = att_pet.get(attribute_name);
                 switch (pet){
-                    case "supression":
+                    case "suppression":
                         //TODO: comprobación de tipo de jerarquía correcto
                         Att_indv ai = hier.getAttIndv(attribute_name);
                         if(! ai.getAttributeType().equals("regex")){
