@@ -12,6 +12,7 @@ import org.deidentifier.arx.criteria.*;
 
 import javax.net.ssl.*;
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
@@ -134,11 +135,12 @@ public class Anonymizer {
         SSLSocketFactory sf = trustAllCerts();
         URL url = null;
         try {
-            url = new URL(domain+"/anonymizer/event?uuid="+eventUuid);
+            url = new URL("http://"+domain+"/anonymizer/event?uuid="+eventUuid);
             System.out.println(domain+"/anonymize/event?uuid="+eventUuid);
-            HttpsURLConnection http = (HttpsURLConnection)url.openConnection();
-            http.setSSLSocketFactory(sf);
-            http.setHostnameVerifier((hostname, session) -> true);
+            //HttpsURLConnection http = (HttpsURLConnection)url.openConnection();
+            HttpURLConnection http = (HttpURLConnection)url.openConnection();
+            //http.setSSLSocketFactory(sf);
+            //http.setHostnameVerifier((hostname, session) -> true);
             http.setRequestMethod("GET");
             http.setDoOutput(true);
             System.out.println(http.getResponseCode() + " " + http.getResponseMessage());
@@ -171,6 +173,51 @@ public class Anonymizer {
         }
         return null;
     }
+
+
+    public String request_orignal_events(String domain, String eventUuid){
+        URL url = null;
+        HttpURLConnection http = null;
+        try {
+            //192.168.1.100:8080/anonymizer/getEvents?timestamp=1648806656
+            url = new URL("http://"+domain+":8085/anonymizer/event?uuid="+eventUuid);
+            http = (HttpURLConnection)url.openConnection();
+            http.setRequestMethod("GET");
+            http.setDoOutput(true);
+        } catch (Exception e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
+
+        try {
+        if(http.getResponseCode() == 200){
+                DataInputStream input = new DataInputStream( http.getInputStream() );
+                StringBuilder sb = new StringBuilder();
+                String linea = null;
+                while((linea = input.readLine())!=null) {
+                    sb.append(linea);
+                }
+                input.close();
+
+                System.out.println(sb.toString());
+                System.out.println("Resp Code:"+http.getResponseCode());
+                System.out.println("Resp Message:"+ http.getResponseMessage());
+                http.disconnect();
+                return sb.toString();
+            }else{
+                //error
+            }
+            }catch (Exception e) {
+                // TODO: handle exception
+                e.printStackTrace();
+            }
+
+        http.disconnect();
+        return null;
+    }
+
+
+
 
     public String anonymize(Event event, PrivacyPolicy pol, Hierarchy hier){
 

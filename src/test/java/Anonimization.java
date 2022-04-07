@@ -13,6 +13,6 @@ public class Anonimization {
         Gson g = new Gson();
         Event e = g.fromJson(sevent, Event.class);
         String hashe = Hashing.sha256().hashString(e.toJsonString(), StandardCharsets.UTF_8).toString();
-        System.out.println("Comprueba " + m.comprueba(e, hashe ));
+       //System.out.println("Comprueba " + m.comprueba(e, hashe ));
     }
 }

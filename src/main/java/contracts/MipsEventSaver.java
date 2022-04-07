@@ -162,10 +162,12 @@ public final class MipsEventSaver implements ContractInterface {
 
         Anonymizer anonymizer = new Anonymizer();
         Event event = genson.deserialize(eventString, Event.class);
-        String responseOrigin = anonymizer.getFilesFromOrigin(url, event.getUuid());
+        //String responseOrigin = anonymizer.getFilesFromOrigin(url, event.getUuid());
+        String responseOrigin = anonymizer.request_orignal_events(url, event.getUuid());
         if(responseOrigin == null){
             //TODO: tratar error
             //o devolver no se cumple
+            return "Error, origin not reachable or event not existing";
         }
         //TODO: check what to do when response is null or error
         Gson g = new Gson();

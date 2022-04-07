@@ -175,7 +175,7 @@ public class Template {
 	public Integer isSuppresion(String object_name, String attribute_name){
 				AttPolicy ap = this.getAttribute(attribute_name);
 				Pet pet = ap.getPets().get(0);
-				if(pet.getScheme().equals("suppresion")){
+				if(pet.getScheme().equals("suppression")){
 					return pet.getLevel();
 				}
 		return null;
