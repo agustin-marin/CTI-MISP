@@ -31,7 +31,7 @@ public class Anonymizer {
     }
 
     private final String UUID = "uuid";
-
+    private final String FIXED_PORT = "8085";
     public SSLSocketFactory trustAllCerts() {
         final TrustManager[] trustAllCerts = new TrustManager[]{
                 new X509TrustManager() {
@@ -180,6 +180,7 @@ public class Anonymizer {
         HttpURLConnection http = null;
         try {
             //192.168.1.100:8080/anonymizer/getEvents?timestamp=1648806656
+            //url = new URL("http://"+domain+":8085/anonymizer/event?uuid="+eventUuid);
             url = new URL("http://"+domain+":8085/anonymizer/event?uuid="+eventUuid);
             http = (HttpURLConnection)url.openConnection();
             http.setRequestMethod("GET");
@@ -225,20 +226,30 @@ public class Anonymizer {
             return null;
         }
 
+        PrivacyOperations privacyoperations = new PrivacyOperations("","");
         EventMISP e = null;
+        String errorMessage = null;
         if (pol.isOnlyAttributes() && hier.isOnlyAttributes() && event.isOnlyAttributes()) {
-            e = apply_privacy(event, pol, hier, true);
-            if (e == null) {
-                // error en anonimización
-                return null;
-            } else {
-                // bien anonimizado
+            java.lang.Object result = privacyoperations.apply_privacy(event, pol, hier, true, null);
+            if (result instanceof String) {
+                errorMessage = (String) result;
+            } else if (result instanceof EventMISP) {
+                e = (EventMISP) result;
+            }
+            if(e == null){
+                return null; //o mensaje de error
+            }else{
                 return e.toJsonString();
             }
         } else if (!(pol.isOnlyAttributes() || hier.isOnlyAttributes() || event.isOnlyAttributes())) {
             System.out.println("Anonimizacion de objetos");
-            e = apply_privacy(event, pol, hier, false);
+            java.lang.Object result = apply_privacy(event, pol, hier, false);
             System.out.println(event.toJsonString());
+            if (result instanceof String) {
+                errorMessage = (String) result;
+            } else if (result instanceof EventMISP) {
+                e = (EventMISP) result;
+            }
             if (e == null) {
                 // error en anonimización
                 return null;
