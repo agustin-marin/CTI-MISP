@@ -29,7 +29,7 @@ public class ObjectTemplateMISP {
 	/**
 	 *
 	 * @param objectTemplate
-	 *
+	 * @param organisation
 	 */
 	public ObjectTemplateMISP(ObjectTemplate objectTemplate) {
 		super();

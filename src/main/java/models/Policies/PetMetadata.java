@@ -1,5 +1,6 @@
 package models.Policies;
 
+import javax.annotation.Generated;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
@@ -14,13 +15,8 @@ public class PetMetadata {
 			@SerializedName("l")
 			@Expose
 			private Integer l;
-
-			@SerializedName("level")
-			@Expose
-			private Integer level;
-
-
-	public Integer getL() {
+			
+			public Integer getL() {
 				return l;
 			}
 
@@ -33,9 +29,9 @@ public class PetMetadata {
 			private Integer c;	//for l-diversity recursive(c,l)
 			
 
-			//@SerializedName("level")
-			//@Expose
-			//private String level;
+			@SerializedName("level")
+			@Expose
+			private Integer level;
 			
 
 			public Integer getC() {

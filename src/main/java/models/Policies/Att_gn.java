@@ -44,6 +44,16 @@ public class Att_gn {
 	public void setRegex(List<String> regex) {
 		this.regex = regex;
 	}
+	
+	//check there is generalization and size of generalization is at least 2
+	public boolean isCorrectGeneralization() {
+		return generalization!=null && generalization.size() > 1;
+	}
+	
+	public boolean isCorrectInterval() {
+		return interval!=null && interval.size() > 1;
+	}
+	
 	public String toJsonString() {
 		Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 		return gson.toJson(this);

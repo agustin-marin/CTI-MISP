@@ -1,9 +1,10 @@
 package models.Policies;
 
+import java.util.List;
+
+import javax.annotation.Generated;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-
-import java.util.List;
 
 public class AttPolicy {
 
@@ -16,6 +17,12 @@ public class AttPolicy {
 	@SerializedName("pets")
 	@Expose
 	private List<Pet> pets = null;
+	@SerializedName("dp_params")
+	@Expose
+	private Att_dp_param dp_params;
+	@SerializedName("dp")
+	@Expose
+	private boolean dp;
 	
 
 	public List<Pet> getPets() {
@@ -57,6 +64,23 @@ public class AttPolicy {
 		this.type = type;
 	}
 	
+	public boolean isDp() {
+		return dp;
+	}
+
+	public void setDp(boolean dp) {
+		this.dp = dp;
+	}
+	
+	public Att_dp_param getDp_params() {
+		return dp_params;
+	}
+
+	public void setDp_params(Att_dp_param dp_params) {
+		this.dp_params = dp_params;
+	}
+
+	//IF K-ANONYMITY RETURNS TRUE
 	public boolean applykanonymity() {
 		for (Pet pet: this.pets ) {
 			String scheme = pet.getScheme();
@@ -69,10 +93,23 @@ public class AttPolicy {
 		return false;
 	}
 
+
+	//NEWER VERSION OF GETKANONYMITY
+	public int getkIfAnonymity(){
+		Pet pet = pets.get(0);
+		if(pet.getScheme().equals("k-anonymity")){
+			return pet.getMetadata().getK();
+		}
+		return 0;
+	}
+
+
+
+	//IF K-ANONYMITY RETURNS K ASSOCIATED
 	public int getKanonymity() {
 		for (Pet pet: this.pets ) {
 			String scheme = pet.getScheme();
-			if (scheme.contains("k-anonimity")){
+			if (scheme.contains("k-anonymity")){
 				System.out.println("k" + pet.getMetadata().getK());
 				return pet.getMetadata().getK();
 			}

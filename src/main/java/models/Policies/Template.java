@@ -3,14 +3,13 @@ package models.Policies;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import javax.annotation.Generated;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-
-import javax.annotation.Generated;
-
+import rst.pdfbox.layout.util.Enumerators;
 
 @Generated("jsonschema2pojo")
 public class Template {
@@ -24,13 +23,24 @@ public class Template {
 	@SerializedName("uuid")
 	@Expose
 	private String uuid;
-	@SerializedName("k-anonimity")
+	@SerializedName("k-anonymity")
 	@Expose
 	private boolean kAnonimity;
 	@SerializedName("k")
 	@Expose
 	private Integer k;
+	@SerializedName("att_aggroupations")
+	@Expose
+		private List<Att_agrupation> att_aggroupations;
 	
+	
+	public List<Att_agrupation> getAtt_aggroupations() {
+		return att_aggroupations;
+	}
+
+	public void setAtt_aggroupations(List<Att_agrupation> att_aggroupations) {
+		this.att_aggroupations = att_aggroupations;
+	}
 
 	public boolean iskAnonimity() {
 		return kAnonimity;
@@ -99,7 +109,18 @@ public class Template {
 		return 0;
 	}
 	
-	
+	public ArrayList<String> quasi_list(){
+		String quasi = "quasi";
+		ArrayList<String> quasi_list = new ArrayList<>();
+		for(AttPolicy ap : attributes){
+			Pet pet = ap.getPets().get(0);
+			if(pet.getScheme().equals(quasi)){
+				quasi_list.add(ap.getName());
+			}
+		}
+		return quasi_list;
+	}
+
 	public ArrayList<String> getQuasi(){
 		String QUASI = "quasi"; 	//for comparison
 		ArrayList<String> quasi_list = new ArrayList<String>();
@@ -170,29 +191,38 @@ public class Template {
 		}
 		return null;
 	}
-
+	
 	//return Level of suppression if it's a suppresion attribute, null otherwise
-	public Integer isSuppresion(String object_name, String attribute_name){
+		public Integer isSuppresion(String object_name, String attribute_name){
+			try {
 				AttPolicy ap = this.getAttribute(attribute_name);
 				Pet pet = ap.getPets().get(0);
 				if(pet.getScheme().equals("suppression")){
 					return pet.getLevel();
 				}
-		return null;
-	}
-
-	public Integer isGeneralization(String object_name, String attribute_name){
-		AttPolicy ap = this.getAttribute(attribute_name);
-		Pet pet = ap.getPets().get(0);
-		if(pet.getScheme().equals("generalization")){
-			return pet.getLevel();
+			} catch (Exception e) {
+				// TODO: handle exception
+				return null;
+			}
+					
+			return null;
 		}
-		return null;
-	}
 
-
-
-	public String toJsonString(){
+		public Integer isGeneralization(String object_name, String attribute_name){
+			try {
+				AttPolicy ap = this.getAttribute(attribute_name);
+				Pet pet = ap.getPets().get(0);
+				if(pet.getScheme().equals("generalization")){
+					return pet.getLevel();
+				}
+			} catch (Exception e) {
+				// TODO: handle exception
+				return null;
+			}
+			return null;
+		}
+	
+    public String toJsonString(){
         Gson gson = new GsonBuilder().disableHtmlEscaping().create();
         return gson.toJson(this);
     }

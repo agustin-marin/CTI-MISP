@@ -27,6 +27,9 @@ public class Event implements Cloneable{
 	@SerializedName("date")
 	@Expose
     private String date;
+	@SerializedName("disable_correlation")
+	@Expose
+    private Boolean disable_correlation;
 	@SerializedName("threat_level_id")
 	@Expose
     private Integer threat_level_id;
@@ -72,10 +75,8 @@ public class Event implements Cloneable{
 	public void setObject(List<Object> object) {
 		this.object = object;
 	}
-
-
-
-    // tags
+	
+	// tags
 
     public Integer getOrgc_id() {
         return orgc_id;
@@ -100,7 +101,15 @@ public class Event implements Cloneable{
     public void setDate(String date) {
         this.date = date;
     }
+    
+	public Boolean getDisable_correlation() {
+		return disable_correlation;
+	}
 
+	public void setDisable_correlation(Boolean disable_correlation) {
+		this.disable_correlation = disable_correlation;
+	}
+    
     public Integer getThreat_level_id() {
         return threat_level_id;
     }

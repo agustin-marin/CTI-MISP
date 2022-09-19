@@ -1,7 +1,6 @@
 package models.Policies;
 
-
-
+import javax.annotation.Generated;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
@@ -47,9 +46,10 @@ public class Pet {
 		this.metadata = metadata;
 	}
 
-	//public String getLevel() {
-	//	return metadata.getLevel()!=null ?  metadata.getLevel() : "medium";
-	//}
+//	public String getLevel() {
+//		return metadata.getLevel()!=null ?  metadata.getLevel() : "medium";
+//	}
+	
 	public Integer getLevel(){
 		//devuelve el level o devuelve 1 nivel por defecto
 		return metadata.getLevel()!=null ? metadata.getLevel() : 1;

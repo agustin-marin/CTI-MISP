@@ -104,15 +104,16 @@ public class Hierarchy{
 		this.uuid = uuid;
 	}
 
+	
 	//return name and type of hierarchy
-	public HashMap<String, String> attgetTypes(){
-		HashMap<String, String> list = new HashMap<>();
-		for(Att_indv ai : this.getHierarchyAttributes()){
-			list.put(ai.getAttributeName(), ai.getAttributeType());
+		public HashMap<String, String> attgetTypes(){
+			HashMap<String, String> list = new HashMap<>();
+			for(Att_indv ai : this.getHierarchyAttributes()){
+				list.put(ai.getAttributeName(), ai.getAttributeType());
+			}
+			return list;
 		}
-		return list;
-	}
-
+	
 	public String getTypeOfAttribute(String name) {
 		for(Att_indv ai : hierarchyAttributes) {
 			if(ai.getAttributeName().equals(name)) {
@@ -157,7 +158,91 @@ public class Hierarchy{
 		
 		return false;
 	}
-
+	
+	
+	//implementation for objects
+	public boolean isRegex(String object_name, String attribute_name) {
+		for(Hierarchy_Object o : this.hierarchyObjects) {
+			if(o.getMisp_object_template().equals(object_name)) {
+				Att_indv ai = o.getAttributeIndv(attribute_name);
+				if(ai != null && ai.getAttributeType().toLowerCase().equals("regex")) {
+					try {
+						Att_gn first_gn = ai.getAttributeGeneralization().get(0);
+						//we also could check format of string values if we wanted to
+						return first_gn.getRegex().size() > 0;
+					} catch (NullPointerException e) {
+						System.out.println("DEBUG catch regex Hierarchy.java");
+						return false;
+					}
+				}
+				return false;
+			}
+		}
+		return false;
+	}
+	
+	//implementation for objects
+	public boolean isGeneralization(String object_name, String attribute_name) {
+		for(Hierarchy_Object o : this.hierarchyObjects) {
+			if(o.getMisp_object_template().equals(object_name)) {
+				Att_indv ai = o.getAttributeIndv(attribute_name);
+				ArrayList<Att_gn> ag  = (ArrayList)ai.getAttributeGeneralization();
+				for(Att_gn a : ag) {
+					System.out.println("a gn");
+				}
+				System.out.println("Ag size a: " + ag.size());
+				if((ai!=null && (ai.getAttributeType().toLowerCase().equals("interval") || ai.getAttributeType().toLowerCase().equals("static"))) && 
+						(ag != null && ag.size() > 0)) {
+					System.out.println("Hierarchy.java DEBUG cumple condición");
+					String attributetype = ai.getAttributeType().toLowerCase();
+					System.out.println("Hierarchy.java " + attributetype);
+					System.out.println("Hierarchy.java " + attribute_name);
+					for(Att_gn g : ai.getAttributeGeneralization()) {
+						if(attributetype.equals("static") && !g.isCorrectGeneralization()) {
+							System.out.println("Hierarchy.java false condition");
+							return false;
+						}else if( attributetype.equals("interval") && ! g.isCorrectInterval()) {
+							System.out.println("Hierarchy.java false condition");
+							return false;
+						}
+					}
+					return true;
+				}
+				return false;
+			}
+		}
+		return false;
+	}
+	
+	
+	//check if has type regex and has regex in his hierarchy specification
+	public boolean isRegex(String attribute_name) {
+		Att_indv ai = getAttIndv(attribute_name);
+		if(ai != null && ai.getAttributeType().toLowerCase().equals("regex")) {
+			try {
+				Att_gn first_gn = ai.getAttributeGeneralization().get(0);
+				//we also could check format of string values if we wanted to
+				return first_gn.getRegex().size() > 0;
+			} catch (NullPointerException e) {
+				return false;
+			}
+		}
+		return false;
+	}
+	
+	public boolean isGeneralization(String attribute_name) {
+		Att_indv ai = getAttIndv(attribute_name);
+		ArrayList<Att_gn> ag  = (ArrayList)ai.getAttributeGeneralization();
+		if((ai!=null && (ai.getAttributeType().toLowerCase().equals("interval") || ai.getAttributeType().toLowerCase().equals("static"))) && 
+				(ag != null && ag.size() > 0)) {
+			for(Att_gn g : ai.getAttributeGeneralization()) {
+				if(! g.isCorrectGeneralization()) return false;
+			}
+			return true;
+		}
+		return false;
+	}
+	
 	public String toJsonString() {
 		Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 		return gson.toJson(this);

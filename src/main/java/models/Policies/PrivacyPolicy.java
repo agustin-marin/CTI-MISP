@@ -34,6 +34,10 @@ public class PrivacyPolicy {
 	@SerializedName("version")
 	@Expose
 	private String version;
+	@SerializedName("dp")
+	@Expose
+	private boolean dp;
+	
 	
 	public PrivacyPolicy() {
 	}
@@ -103,6 +107,22 @@ public class PrivacyPolicy {
 		this.uuid = uuid;
 	}
 	
+	
+	public boolean isDp() {
+		return dp;
+	}
+
+	public void setDp(boolean dp) {
+		this.dp = dp;
+	}
+
+	public AttPolicy getAtt(String attname) {
+		for(AttPolicy ap : this.getAttributes()) {
+			if(ap.getName().equals(attname)) return ap;
+		}
+		return null;
+	}
+
 	//returns HashMap with attribute name and first pet(is our actual approach as over an attribute only can be applied one pet)
 	public HashMap<String, String> attNamePet(){
 		HashMap<String, String> list = new HashMap<String, String>();
@@ -111,18 +131,7 @@ public class PrivacyPolicy {
 		}
 		return list;
 	}
-
-	//return hashmap with name of attribute and level in case it has all supression or all generalization scheme
-	public HashMap<String, Integer> attLevelSupression(){
-		HashMap<String, Integer> list = new HashMap<>();
-		for(AttPolicy ap : attributes){
-			Pet pet = ap.getPets().get(0);
-			String scheme = pet.getScheme();
-			if(scheme.equals("suppression") || scheme.equals("generalization")) list.put(ap.getName(), pet.getLevel());
-		}
-		return list;
-	}
-
+	
 	//return 0 in case dont have k-anonimity
 	public Integer attGetK(String attname) {
 		for(AttPolicy ap : attributes) {
@@ -139,13 +148,29 @@ public class PrivacyPolicy {
 	}
 	
 	public Integer attGetCLDiversity(String attname) {
+		//TODO: posible errata
 		int t;
 		int c;
 		for(AttPolicy ap : attributes) {
-			if(ap.getName().equals(attname)) ;
+			if(ap.getName().equals(attname));
 		}
 		return 0;
 	}
+	
+	
+	
+	//return hashmap with name of attribute and level in case it has all supression or all generalization scheme
+		public HashMap<String, Integer> attLevelSupression(){
+			String SUPPRESSION = "suppression";
+			String GENERALIZATION = "generalization";
+			HashMap<String, Integer> list = new HashMap<>();
+			for(AttPolicy ap : attributes){
+				Pet pet = ap.getPets().get(0);
+				String scheme = pet.getScheme();
+				if(scheme.equals(SUPPRESSION) || scheme.equals(GENERALIZATION)) list.put(ap.getName(), pet.getLevel());
+			}
+			return list;
+		}
 	
 	
 	//return attribute names that has t-closeness policy of an object
@@ -215,21 +240,7 @@ public class PrivacyPolicy {
 		
 		return false;
 	}
-
-	//return Level of suppression if it's a suppresion attribute, null otherwise
-	public Integer isSuppresion(String object_name, String attribute_name){
-		for(Template template : this.templates){
-			if(template.getName().equals(object_name)){
-				AttPolicy ap = template.getAttribute(attribute_name);
-				Pet pet = ap.getPets().get(0);
-				if(pet.getScheme().equals("suppresion")){
-					return pet.getLevel();
-				}
-			}
-		}
-		return null;
-	}
-
+	
     public String toJsonString(){
         Gson gson = new GsonBuilder().disableHtmlEscaping().create();
         return gson.toJson(this);

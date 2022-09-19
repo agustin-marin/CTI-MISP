@@ -48,13 +48,13 @@ public class ObjectTemplateElement {
 	public ObjectTemplateElement() {
 	}
 
-	/*
 	/**
 	 *
 	 * @param objectTemplateId
 	 * @param valuesList
 	 * @param saneDefault
 	 * @param objectRelation
+	 * @param multiple
 	 * @param description
 	 * @param id
 	 * @param categories
