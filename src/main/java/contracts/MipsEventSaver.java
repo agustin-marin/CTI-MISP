@@ -1,6 +1,7 @@
 package contracts;
 
 import anonymization.Anonymizer;
+import anonymization.Hasher;
 import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.owlike.genson.Genson;
@@ -8,6 +9,7 @@ import com.owlike.genson.GensonBuilder;
 import model.MetadataEvent;
 import model.Response;
 import models.MISP.Event;
+import models.MISP.EventMISP;
 import models.Policies.*;
 import org.hyperledger.fabric.contract.Context;
 import org.hyperledger.fabric.contract.ContractInterface;
@@ -171,6 +173,7 @@ public final class MipsEventSaver implements ContractInterface {
         }
         //TODO: check what to do when response is null or error
         Gson g = new Gson();
+        System.out.println("Raw event from origin " + responseOrigin);
         EventAnon e = g.fromJson(responseOrigin, EventAnon.class);
         Event plain_event = e.getEvent();
         PrivacyPolicy privacypolicy = e.getPrivacyPolicy();
@@ -190,22 +193,29 @@ public final class MipsEventSaver implements ContractInterface {
         //si correcto, anonimizar
         //obtenidas de peticion a tatis origen
         String event_anonymised = anonymizer.anonymize(plain_event,privacypolicy, hierarchypolicy);
-        Event e_anon = g.fromJson(event_anonymised, EventAnon.class).getEvent();
-        System.out.println("e_anon: "+e_anon.toJsonString());
+        //DESCOMENTAR FUNCIONABA SOLO 1 ORGANIZACION Event e_anon = g.fromJson(event_anonymised, EventAnon.class).getEvent();
+                Event e_anon = g.fromJson(event_anonymised, EventAnon.class).getEvent();
+        //System.out.println("e_anon: "+e_anon.toJsonString());
         anonymizer.setAllUuidtoNull(e_anon);
-        System.out.println("e_anon: "+e_anon.toJsonString());
-        String hashA = Hashing.sha256().hashString(e_anon.toJsonString(), StandardCharsets.UTF_8).toString();
+        System.out.println("even_anonymised: "+e_anon.toJsonString());
+        String hashA = Hashing.sha256().hashString(Hasher.checkHashes(e_anon), StandardCharsets.UTF_8).toString();
         //comprobar hashA == hash Anonimizado en blockchain
-
+        //hardoded - ***QUITAR
+        //hashA = hashAnon;
+        //
         if(!hashA.equals(hashAnon)){
             System.out.println("No Coinciden los hashes\n"+
             "HASH - A: "+ hashA + "\n"+
             "HASH - B: "+ hashAnon);
             //TODO: error, los eventos anonimizados no coinciden
+            System.out.println("Se modifica el codigo de la blockchain");
+            System.out.println(responseOrigin);
             return "Error: Event hashes are not equal";
         }
         //TODO: se supone que si llega aquí los hashes coinciden
-        System.out.println("Si coninciden");
+        System.out.println("Hash published in blockchain hashA:" + hashA);
+        System.out.println("Hash anonymization over raw event hashAnon " + hashAnon);
+        System.out.println("HASHES MATCH");
         //si bien, devuelve ok.
         // compare to metadata.response
         Response response = metadataEvent.getResponse(); // evento anonimizado hasheado

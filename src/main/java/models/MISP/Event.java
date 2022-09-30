@@ -33,6 +33,9 @@ public class Event implements Cloneable{
 	@SerializedName("threat_level_id")
 	@Expose
     private Integer threat_level_id;
+    @SerializedName("sharing_group_id")
+    @Expose
+    private Integer sharing_group_id;
 	@SerializedName("info")
 	@Expose
     private String info;
@@ -156,6 +159,14 @@ public class Event implements Cloneable{
 
     public void setDistribution(Integer distribution) {
         this.distribution = distribution;
+    }
+
+    public Integer getSharing_group_id() {
+        return sharing_group_id;
+    }
+
+    public void setSharing_group_id(Integer sharing_group_id) {
+        this.sharing_group_id = sharing_group_id;
     }
 
     public Integer getId() {

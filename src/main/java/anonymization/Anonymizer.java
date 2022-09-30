@@ -31,7 +31,7 @@ public class Anonymizer {
     }
 
     private final String UUID = "uuid";
-    private final String FIXED_PORT = "8085";
+    private final String FIXED_PORT = "8095";
     public SSLSocketFactory trustAllCerts() {
         final TrustManager[] trustAllCerts = new TrustManager[]{
                 new X509TrustManager() {
@@ -181,7 +181,7 @@ public class Anonymizer {
         try {
             //192.168.1.100:8080/anonymizer/getEvents?timestamp=1648806656
             //url = new URL("http://"+domain+":8085/anonymizer/event?uuid="+eventUuid);
-            url = new URL("http://"+domain+":8085/anonymizer/event?uuid="+eventUuid);
+            url = new URL("http://"+domain+":"+FIXED_PORT+"/anonymizer/event?uuid="+eventUuid);
             http = (HttpURLConnection)url.openConnection();
             http.setRequestMethod("GET");
             http.setDoOutput(true);
